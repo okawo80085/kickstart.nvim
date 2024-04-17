@@ -66,7 +66,7 @@ vim.opt.inccommand = "split"
 vim.opt.cursorline = true
 
 -- Minimal number of screen lines to keep above and below the cursor.
-vim.opt.scrolloff = 10
+vim.opt.scrolloff = 20
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
@@ -211,7 +211,6 @@ require("lazy").setup({
 	-- you do for a plugin at the top level, you can do for a dependency.
 	--
 	-- Use the `dependencies` key to specify the dependencies of a particular plugin
-
 	{ -- Fuzzy Finder (files, lsp, etc)
 		"nvim-telescope/telescope.nvim",
 		event = "VimEnter",
@@ -262,11 +261,15 @@ require("lazy").setup({
 				-- You can put your default mappings / updates / etc. in here
 				--  All the info you're looking for is in `:help telescope.setup()`
 				--
-				-- defaults = {
-				--   mappings = {
-				--     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
-				--   },
-				-- },
+				defaults = {
+					--   mappings = {
+					--     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
+					--   },
+					layout_config = {
+						width = 0.9,
+					},
+					wrap_results = true,
+				},
 				-- pickers = {}
 				extensions = {
 					["ui-select"] = {
@@ -298,6 +301,7 @@ require("lazy").setup({
 				builtin.current_buffer_fuzzy_find(require("telescope.themes").get_dropdown({
 					winblend = 10,
 					previewer = false,
+					wrap_results = true,
 				}))
 			end, { desc = "[/] Fuzzily search in current buffer" })
 
@@ -458,9 +462,7 @@ require("lazy").setup({
 			--        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
 			local servers = {
 				clangd = {
-					keys = {
-						{ "<leader>cR", "<cmd>ClangdSwitchSourceHeader<cr>", desc = "Switch Source/Header (C/C++)" },
-					},
+					keys = {},
 					root_dir = function(fname)
 						return require("lspconfig.util").root_pattern(
 							"Makefile",
