@@ -119,6 +119,21 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 	end,
 })
 
+-- file type specific settings
+-- default line width and column breaker
+vim.cmd([[ set tw=100 ]])
+vim.cmd([[ set cc=60,70,80,90,100 ]])
+
+vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead", "BufEnter" }, {
+	desc = "Git settings",
+	group = vim.api.nvim_create_augroup("okawo-git-settings", { clear = true }),
+	pattern = "COMMIT_EDITMSG",
+	callback = function()
+		vim.cmd([[ set tw=59 ]])
+		vim.cmd([[ set cc=50,60 ]])
+	end,
+})
+--
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
@@ -170,6 +185,38 @@ require("lazy").setup({
 				topdelete = { text = "‾" },
 				changedelete = { text = "~" },
 			},
+			on_attach = function(bufnr)
+				local gitsigns = require("gitsigns")
+
+				local function map(mode, l, r, opts)
+					opts = opts or {}
+					opts.buffer = bufnr
+					vim.keymap.set(mode, l, r, opts)
+				end
+
+				-- Navigation
+				map("n", "]c", function()
+					if vim.wo.diff then
+						vim.cmd.normal({ "]c", bang = true })
+					else
+						gitsigns.nav_hunk("next")
+					end
+				end)
+
+				map("n", "[c", function()
+					if vim.wo.diff then
+						vim.cmd.normal({ "[c", bang = true })
+					else
+						gitsigns.nav_hunk("prev")
+					end
+				end)
+
+				map("n", "<leader>hp", gitsigns.preview_hunk, { desc = "[H]hunk [p]eview" })
+				map("n", "<leader>hr", gitsigns.reset_hunk, { desc = "[H]hunk [r]eset" })
+				map("n", "<leader>hs", gitsigns.stage_hunk, { desc = "[H]hunk [s]tage" })
+				map("n", "<leader>hu", gitsigns.undo_stage_hunk, { desc = "[H]hunk [u]ndo stage" })
+				map("n", "<leader>lb", gitsigns.toggle_current_line_blame, { desc = "Toggle [L]ine [b]lame" })
+			end,
 		},
 	},
 
@@ -265,9 +312,9 @@ require("lazy").setup({
 					--   mappings = {
 					--     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
 					--   },
-					layout_config = {
-						width = 0.9,
-					},
+					-- layout_config = {
+					-- width = 0.9,
+					-- },
 					wrap_results = true,
 				},
 				-- pickers = {}
@@ -398,15 +445,18 @@ require("lazy").setup({
 
 					-- Fuzzy find all the symbols in your current document.
 					--  Symbols are things like variables, functions, types, etc.
-					map("<leader>ds", require("telescope.builtin").lsp_document_symbols, "[D]ocument [S]ymbols")
+					map("<leader>ds", function()
+						require("telescope.builtin").lsp_document_symbols({ fname_width = 70, symbol_width = 35 })
+					end, "[D]ocument [S]ymbols")
 
 					-- Fuzzy find all the symbols in your current workspace.
 					--  Similar to document symbols, except searches over your entire project.
-					map(
-						"<leader>ws",
-						require("telescope.builtin").lsp_dynamic_workspace_symbols,
-						"[W]orkspace [S]ymbols"
-					)
+					map("<leader>ws", function()
+						require("telescope.builtin").lsp_dynamic_workspace_symbols({
+							fname_width = 70,
+							symbol_width = 35,
+						})
+					end, "[W]orkspace [S]ymbols")
 
 					-- Rename the variable under your cursor.
 					--  Most Language Servers support renaming across files, etc.
@@ -487,7 +537,8 @@ require("lazy").setup({
 						"--header-insertion=iwyu",
 						"--completion-style=detailed",
 						"--function-arg-placeholders",
-						"--fallback-style=llvm",
+						"--fallback-style=webkit",
+						-- "---enable-config",
 					},
 					init_options = {
 						usePlaceholders = true,
